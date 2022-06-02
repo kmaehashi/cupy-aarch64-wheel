@@ -48,7 +48,8 @@ jobs:
     - name: Build
       run: |
         cd cupy-release-tools
-        ./build.sh "${{ matrix.cuda }}" "${{ matrix.python }}"
+        # ./build.sh "${{ matrix.cuda }}" "${{ matrix.python }}"
+        echo ./build.sh "${{ matrix.cuda }}" "${{ matrix.python }}" > "cupy-${{ matrix.cuda }}-${{ matrix.python }}.whl"
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
