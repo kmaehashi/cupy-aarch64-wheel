@@ -36,12 +36,12 @@ jobs:
         cuda: ["11.6-aarch64"]
         python: ["3.7", "3.8", "3.9", "3.10"]
 
+    steps:
     - name: Setup Python
       uses: actions/setup-python@v2
       with:
         python-version: '3.9'
 
-    steps:
     - name: Download Source
       uses: actions/download-artifact@v2
       with:
