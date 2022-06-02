@@ -53,4 +53,5 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: cupy-wheel
-        path: cupy*.whl
+        path: cupy-release-tools/cupy-*.whl
+        if-no-files-found: error
