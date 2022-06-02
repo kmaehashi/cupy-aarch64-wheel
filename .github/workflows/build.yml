@@ -10,11 +10,6 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Setup Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.9'
-
     - name: Prepare Source
       run: |
         git clone https://github.com/cupy/cupy-release-tools.git
@@ -45,6 +40,11 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         name: source
+
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
 
     - name: Build
       run: |
