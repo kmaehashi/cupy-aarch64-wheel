@@ -1,0 +1,56 @@
+name: "Build Wheels"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  prepare-source:
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+
+    - name: Prepare Source
+      run: |
+        git clone https://github.com/cupy/cupy-release-tools.git
+        pushd cupy-release-tools
+            git checkout "${GITHUB_REF}"
+            git clone --recursive https://github.com/cupy/cupy.git
+            pushd cupy
+                git checkout "${GITHUB_REF}"
+            popd
+        popd
+
+    - name: Upload Source
+      uses: actions/upload-artifact@v2
+      with:
+        name: source
+        path: cupy-release-tools
+
+  build:
+    needs: [prepare-source]
+    runs-on: self-hosted
+    strategy:
+      matrix:
+        cuda: ["11.6-aarch64"]
+        python: ["3.7", "3.8", "3.9", "3.10"]
+
+    - name: Download Source
+        uses: actions/download-artifact@v2
+      with:
+        name: source
+
+    - name: Build
+      run: |
+        cd cupy-release-tools
+        ./build.sh "${{ matrix.cuda }}" "${{ matrix.python }}"
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: cupy-wheel
+        path: cupy*.whl
