@@ -20,12 +20,13 @@ jobs:
                 git checkout "${GITHUB_REF}"
             popd
         popd
+        tar cjf source.tar.gz cupy-release-tools
 
     - name: Upload Source
       uses: actions/upload-artifact@v2
       with:
         name: source
-        path: cupy-release-tools
+        path: source.tar.gz
 
   build:
     needs: [prepare-source]
@@ -35,19 +36,20 @@ jobs:
         cuda: ["11.6-aarch64"]
         python: ["3.7", "3.8", "3.9", "3.10"]
 
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+
     steps:
     - name: Download Source
       uses: actions/download-artifact@v2
       with:
         name: source
 
-    - name: Setup Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.9'
-
     - name: Build
       run: |
+        tar xf source.tar.gz
         cd cupy-release-tools
         # ./build.sh "${{ matrix.cuda }}" "${{ matrix.python }}"
         echo ./build.sh "${{ matrix.cuda }}" "${{ matrix.python }}" > "cupy-${{ matrix.cuda }}-${{ matrix.python }}.whl"
