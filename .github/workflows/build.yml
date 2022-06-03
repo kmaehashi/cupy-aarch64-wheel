@@ -29,8 +29,8 @@ jobs:
         path: source.tar.gz
 
   build:
-    needs: [prepare-source]
     runs-on: self-hosted
+    needs: [prepare-source]
     strategy:
       matrix:
         cuda: ["11.6-aarch64"]
@@ -55,3 +55,10 @@ jobs:
         name: cupy-wheel
         path: cupy-release-tools/cupy-*.whl
         if-no-files-found: error
+
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Upload to GitHub Releases
+      run: |
+        echo TODO!
