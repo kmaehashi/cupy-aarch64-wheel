@@ -2,6 +2,10 @@ name: "Build Wheels"
 
 on:
   workflow_dispatch:
+    inputs:
+      target:
+        description: 'Target Branch or Tag'
+        required: true
 
 jobs:
   prepare-source:
@@ -14,10 +18,10 @@ jobs:
       run: |
         git clone https://github.com/cupy/cupy-release-tools.git
         pushd cupy-release-tools
-            git checkout "${GITHUB_REF}"
+            git checkout "${{ github.event.inputs.target }}"
             git clone --recursive https://github.com/cupy/cupy.git
             pushd cupy
-                git checkout "${GITHUB_REF}"
+                git checkout "${{ github.event.inputs.target }}"
             popd
         popd
         tar cjf source.tar.gz cupy-release-tools
