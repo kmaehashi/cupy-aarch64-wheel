@@ -115,7 +115,7 @@ jobs:
   postflight:
     # Verify that everything is ready.
     runs-on: ubuntu-latest
-    needs: [sdist, cuda-linux-x64, cuda-windows-x64, cuda-linux-aarch64, rocm-linux-x64]
+    needs: [sdist-and-cuda-x64, cuda-linux-aarch64, rocm-linux-x64]
     steps:
     - name: Verify
       run: |
