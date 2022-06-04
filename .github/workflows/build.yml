@@ -22,7 +22,8 @@ on:
       matrix_cuda_linux_aarch64:
         description: 'Matrix: CUDA (Linux/aarch64)'
         required: true
-        default: '["10.2-jetson", "11.6-aarch64"]'
+        #default: '["10.2-jetson", "11.6-aarch64"]'
+        default: '["11.6-aarch64"]'
       matrix_rocm_linux_x64:
         description: 'Matrix: ROCm (Linux/x64)'
         required: true
