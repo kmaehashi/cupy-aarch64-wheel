@@ -6,10 +6,14 @@ on:
       target:
         description: 'Target Branch or Tag'
         required: true
-
-env:
-  MATRIX_CUDA: '["11.6-aarch64"]'
-  MATRIX_PYTHON: '["3.7", "3.8", "3.9", "3.10"]'
+      matrix_cuda:
+        description: 'Matrix (CUDA)'
+        required: true
+        default: '["11.6-aarch64"]'
+      matrix_python:
+        description: 'Matrix (Python)'
+        required: true
+        default: '["3.7", "3.8", "3.9", "3.10"]'
 
 jobs:
   prepare-source:
@@ -40,7 +44,7 @@ jobs:
     runs-on: self-hosted
     strategy:
       matrix:
-        cuda: ${{ fromJSON(env.MATRIX_CUDA) }}
+        cuda: ${{ fromJSON(github.event.inputs.matrix_cuda) }}
     steps:
     - name: Prepare Build
       run: |
@@ -51,8 +55,8 @@ jobs:
     needs: [prepare-source, prepare-build]
     strategy:
       matrix:
-        cuda: ${{ fromJSON(env.MATRIX_CUDA) }}
-        python: ${{ fromJSON(env.MATRIX_PYTHON) }}
+        cuda: ${{ fromJSON(github.event.inputs.matrix_cuda) }}
+        python: ${{ fromJSON(github.event.inputs.matrix_python) }}
 
     steps:
     - name: Download Source
