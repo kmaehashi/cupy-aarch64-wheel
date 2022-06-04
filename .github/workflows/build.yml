@@ -4,24 +4,42 @@ on:
   workflow_dispatch:
     inputs:
       target:
-        description: 'Target Branch or Tag'
+        description: 'Target Branch or Tag (e.g., `master`, `v10`, `v10.5.0`)'
         required: true
-      matrix_cuda:
-        description: 'Matrix (CUDA)'
+      release:
+        description: 'Release Name to Upload (e.g., `v10.5.0`)'
+      flexci_token:
+        description: 'FlexCI Token: (1) Open https://ci.preferred.jp/x/signin (2) Open https://ci.preferred.jp/p/settings'
         required: true
-        default: '["11.6-aarch64"]'
+      matrix_cuda_linux_x64:
+        description: 'Matrix: CUDA (Linux/x64)'
+        required: true
+        default: '["11.6"]'
+      matrix_cuda_windows_x64:
+        description: 'Matrix: CUDA (Windows/x64)'
+        required: true
+        default: '["11.6"]'
+      matrix_cuda_linux_aarch64:
+        description: 'Matrix: CUDA (Linux/aarch64)'
+        required: true
+        default: '["10.2-jetson", "11.6-aarch64"]'
+      matrix_rocm_linux_x64:
+        description: 'Matrix: ROCm (Linux/x64)'
+        required: true
+        default: '["rocm-4.3", "rocm-5.0"]'
       matrix_python:
-        description: 'Matrix (Python)'
+        description: 'Matrix: Python'
         required: true
         default: '["3.7", "3.8", "3.9", "3.10"]'
 
 jobs:
-  prepare-source:
+  preflight:
+    # Creates an source archive of cupy-release-tools and cupy repository for the target.
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-
+    - name: Check Release Exists
+      run: |
+        echo TODO - ensure that the specified release already exists
     - name: Prepare Source
       run: |
         git clone https://github.com/cupy/cupy-release-tools.git
@@ -33,55 +51,71 @@ jobs:
             popd
         popd
         tar cjf source.tar.bz2 cupy-release-tools
-
     - name: Upload Source
       uses: actions/upload-artifact@v2
       with:
         name: source
         path: source.tar.bz2
 
-  prepare-build:
-    runs-on: self-hosted
-    strategy:
-      matrix:
-        cuda: ${{ fromJSON(github.event.inputs.matrix_cuda) }}
-    steps:
-    - name: Prepare Build
-      run: |
-        echo Hi
-
-  build:
-    runs-on: self-hosted
-    needs: [prepare-source, prepare-build]
-    strategy:
-      matrix:
-        cuda: ${{ fromJSON(github.event.inputs.matrix_cuda) }}
-        python: ${{ fromJSON(github.event.inputs.matrix_python) }}
-
+  sdist-and-cuda-x64:
+    # Euqueues a build job on FlexCI and wait until it completes.
+    # Targets: sdist, cuda-linux-x64, cuda-windows-x64
+    runs-on: ubuntu-latest
+    needs: [preflight]
     steps:
     - name: Download Source
       uses: actions/download-artifact@v2
       with:
         name: source
+    - name: Build & Upload
+      run: |
+        echo TODO - Enqueue FlexCI job to build sdist and upload to GitHub Releases
+        echo TODO - Wait until FlexCI job complete
 
-    - name: Build
+  cuda-linux-aarch64:
+    # Builds on Arm64 node.
+    # Note that verification is not supported as CUDA is unavailable.
+    runs-on: [self-hosted, linux, arm64]
+    needs: [preflight]
+    strategy:
+      matrix:
+        cuda: ${{ fromJSON(github.event.inputs.matrix_cuda_linux_aarch64) }}
+    steps:
+    - name: Download Source
+      uses: actions/download-artifact@v2
+      with:
+        name: source
+    - name: Build & Upload
       run: |
         tar xf source.tar.bz2
         cd cupy-release-tools
-        #echo ./build.sh "${{ matrix.cuda }}" "${{ matrix.python }}" > "cupy-${{ matrix.cuda }}-${{ matrix.python }}.whl"
+        export CUPY_RELEASE_SKIP_VERIFY=1
         ./build.sh "${{ matrix.cuda }}" "${{ matrix.python }}"
+        echo TODO - Upload to github releases
 
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: wheels
-        path: cupy-release-tools/cupy-*.whl
-        if-no-files-found: error
-
-  upload:
-    runs-on: ubuntu-latest
-    needs: [build]
+  rocm-linux-x64:
+    # Builds on ROCm node.
+    runs-on: [self-hosted, linux, x64, rocm]
+    needs: [preflight]
+    strategy:
+      matrix:
+        cuda: ${{ fromJSON(github.event.inputs.matrix_rocm_linux_x64) }}
     steps:
-    - name: Upload to GitHub Releases
+    - name: Download Source
+      uses: actions/download-artifact@v2
+      with:
+        name: source
+    - name: Build & Upload
       run: |
-        echo TODO!
+        tar xf source.tar.bz2
+        cd cupy-release-tools
+        ./build.sh "${{ matrix.cuda }}" "${{ matrix.python }}"
+        gh release --repo cupy/cupy upload "${{ github.event.inputs.release }}" cupy-*.whl
+
+  postflight:
+    # Verify that everything is ready.
+    runs-on: ubuntu-latest
+    needs: [sdist, cuda-linux-x64, cuda-windows-x64, cuda-linux-aarch64, rocm-linux-x64]
+    steps:
+    run: |
+      echo TODO - run verification tool
