@@ -117,5 +117,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [sdist, cuda-linux-x64, cuda-windows-x64, cuda-linux-aarch64, rocm-linux-x64]
     steps:
-    run: |
-      echo TODO - run verification tool
+    - name: Verify
+      run: |
+        echo TODO - run verification tool
