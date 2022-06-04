@@ -26,7 +26,6 @@ jobs:
   preflight:
     # Creates an source archive of cupy-release-tools and cupy repository for the target.
     runs-on: ubuntu-latest
-    name: Preflight
     steps:
     - name: Check Release Exists
       run: |
