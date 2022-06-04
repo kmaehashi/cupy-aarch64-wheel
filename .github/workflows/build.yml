@@ -8,8 +8,8 @@ on:
         required: true
 
 env:
-  MATRIX_CUDA: ["11.6-aarch64"]
-  MATRIX_PYTHON: ["3.7", "3.8", "3.9", "3.10"]
+  MATRIX_CUDA: '["11.6-aarch64"]'
+  MATRIX_PYTHON: '["3.7", "3.8", "3.9", "3.10"]'
 
 jobs:
   prepare-source:
@@ -40,7 +40,7 @@ jobs:
     runs-on: self-hosted
     strategy:
       matrix:
-        cuda: ${{ env.MATRIX_CUDA }}
+        cuda: ${{ fromJSON(env.MATRIX_CUDA) }}
     steps:
     - name: Prepare Build
       run: |
@@ -51,8 +51,8 @@ jobs:
     needs: [prepare-source, prepare-build]
     strategy:
       matrix:
-        cuda: ${{ env.MATRIX_CUDA }}
-        python: ${{ env.MATRIX_PYTHON }}
+        cuda: ${{ fromJSON(env.MATRIX_CUDA) }}
+        python: ${{ fromJSON(env.MATRIX_PYTHON) }}
 
     steps:
     - name: Download Source
