@@ -8,17 +8,6 @@ on:
         required: true
       release:
         description: 'Release Name to Upload (e.g., `v10.5.0`)'
-      flexci_token:
-        description: 'FlexCI Token: (1) Open https://ci.preferred.jp/x/signin (2) Open https://ci.preferred.jp/p/settings'
-        required: true
-      matrix_cuda_linux_x64:
-        description: 'Matrix: CUDA (Linux/x64)'
-        required: true
-        default: '["11.6"]'
-      matrix_cuda_windows_x64:
-        description: 'Matrix: CUDA (Windows/x64)'
-        required: true
-        default: '["11.6"]'
       matrix_cuda_linux_aarch64:
         description: 'Matrix: CUDA (Linux/aarch64)'
         required: true
@@ -53,7 +42,7 @@ jobs:
             popd
         popd
         tar cjf source.tar.bz2 cupy-release-tools
-    - name: Upload Source
+    - name: Artifact (Source)
       uses: actions/upload-artifact@v2
       with:
         name: source
@@ -77,10 +66,8 @@ jobs:
         tar xf source.tar.bz2
         cd cupy-release-tools
         export CUPY_RELEASE_SKIP_VERIFY=1
-        for PY in ${{ join(fromJSON(github.event.inputs.matrix_python), ' ') }}; do
-          ./build.sh "${{ matrix.cuda }}" "${PY}"
-        done
-    - name: Upload Wheels
+        echo ${{ join(fromJSON(github.event.inputs.matrix_python), ' ') }} | xargs ./build.sh "${{ matrix.cuda }}"
+    - name: Artifact (Wheels)
       uses: actions/upload-artifact@v2
       with:
         name: wheels
@@ -98,25 +85,25 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         name: source
-    - name: Build & Upload
+    - name: Build
       run: |
         tar xf source.tar.bz2
         cd cupy-release-tools
-        for PY in ${{ join(fromJSON(github.event.inputs.matrix_python), ' ') }}; do
-          ./build.sh "${{ matrix.cuda }}" "${PY}"
-        done
-    - name: Upload Wheels
+        echo ${{ join(fromJSON(github.event.inputs.matrix_python), ' ') }} | xargs ./build.sh "${{ matrix.cuda }}"
+    - name: Artifact (Wheels)
       uses: actions/upload-artifact@v2
       with:
         name: wheels
         path: cupy-release-tools/*.whl
 
   postflight:
-    # Verify that everything is ready.
     runs-on: ubuntu-latest
-    needs: [sdist-and-cuda-x64, cuda-linux-aarch64, rocm-linux-x64]
+    needs: [cuda-linux-aarch64, rocm-linux-x64]
     steps:
-    - name: Verify
+    - name: Download Wheels
+      uses: actions/download-artifact@v2
+      with:
+        name: wheels
+    - name: Publish Wheels to GitHub Releases
       run: |
-        echo TODO - run verification tool
-        #gh release --repo cupy/cupy upload "${{ github.event.inputs.release }}" cupy-*.whl
+        gh release --repo cupy/cupy upload "${{ github.event.inputs.release }}" cupy-release-tools/cupy-*.whl
