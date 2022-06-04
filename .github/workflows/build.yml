@@ -4,10 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       target:
-        description: 'Target Branch or Tag (e.g., `master`, `v10`, `v10.5.0`)'
+        description: 'Build Target Branch/Tag (e.g., master, v10, v10.5.0)'
         required: true
       release:
-        description: 'Release Name to Upload (e.g., `v10.5.0`)'
+        description: 'Release Name to Upload (e.g., v10.5.0)'
+        required: true
       matrix_cuda_linux_aarch64:
         description: 'Matrix: CUDA (Linux/aarch64)'
         required: true
@@ -24,7 +25,7 @@ on:
 
 jobs:
   preflight:
-    # Creates an source archive of cupy-release-tools and cupy repository for the target.
+    # Creates a source archive of cupy-release-tools and cupy repository.
     runs-on: ubuntu-latest
     steps:
     - name: Check Release Exists
@@ -40,7 +41,7 @@ jobs:
                 git checkout "${{ github.event.inputs.target }}"
             popd
         popd
-        tar cjf source.tar.bz2 cupy-release-tools
+        tar cjf source.tar.bz2 --exclude-vcs cupy-release-tools
     - name: Artifact (Source)
       uses: actions/upload-artifact@v2
       with:
@@ -60,17 +61,13 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         name: source
-    - name: Build
+    - name: Build & Upload
       run: |
         tar xf source.tar.bz2
         cd cupy-release-tools
         export CUPY_RELEASE_SKIP_VERIFY=1
         echo ${{ join(fromJSON(github.event.inputs.matrix_python), ' ') }} | xargs ./build.sh "${{ matrix.cuda }}"
-    - name: Artifact (Wheels)
-      uses: actions/upload-artifact@v2
-      with:
-        name: wheels
-        path: cupy-release-tools/*.whl
+        gh release --repo cupy/cupy upload "${{ github.event.inputs.release }}" *.whl
 
   rocm-linux-x64:
     # Builds on ROCm node.
@@ -84,25 +81,9 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         name: source
-    - name: Build
+    - name: Build & Upload
       run: |
         tar xf source.tar.bz2
         cd cupy-release-tools
         echo ${{ join(fromJSON(github.event.inputs.matrix_python), ' ') }} | xargs ./build.sh "${{ matrix.cuda }}"
-    - name: Artifact (Wheels)
-      uses: actions/upload-artifact@v2
-      with:
-        name: wheels
-        path: cupy-release-tools/*.whl
-
-  postflight:
-    runs-on: ubuntu-latest
-    needs: [cuda-linux-aarch64, rocm-linux-x64]
-    steps:
-    - name: Download Wheels
-      uses: actions/download-artifact@v2
-      with:
-        name: wheels
-    - name: Publish Wheels to GitHub Releases
-      run: |
-        gh release --repo cupy/cupy upload "${{ github.event.inputs.release }}" cupy-release-tools/cupy-*.whl
+        gh release --repo cupy/cupy upload "${{ github.event.inputs.release }}" *.whl
