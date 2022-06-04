@@ -7,6 +7,10 @@ on:
         description: 'Target Branch or Tag'
         required: true
 
+env:
+  MATRIX_CUDA: ["11.6-aarch64"]
+  MATRIX_PYTHON: ["3.7", "3.8", "3.9", "3.10"]
+
 jobs:
   prepare-source:
     runs-on: ubuntu-latest
@@ -24,21 +28,31 @@ jobs:
                 git checkout "${{ github.event.inputs.target }}"
             popd
         popd
-        tar cjf source.tar.gz cupy-release-tools
+        tar cjf source.tar.bz2 cupy-release-tools
 
     - name: Upload Source
       uses: actions/upload-artifact@v2
       with:
         name: source
-        path: source.tar.gz
+        path: source.tar.bz2
+
+  prepare-build:
+    runs-on: self-hosted
+    strategy:
+      matrix:
+        cuda: ${{ env.MATRIX_CUDA }}
+    steps:
+    - name: Prepare Build
+      run: |
+        echo Hi
 
   build:
     runs-on: self-hosted
-    needs: [prepare-source]
+    needs: [prepare-source, prepare-build]
     strategy:
       matrix:
-        cuda: ["11.6-aarch64"]
-        python: ["3.7", "3.8", "3.9", "3.10"]
+        cuda: ${{ env.MATRIX_CUDA }}
+        python: ${{ env.MATRIX_PYTHON }}
 
     steps:
     - name: Download Source
@@ -48,7 +62,7 @@ jobs:
 
     - name: Build
       run: |
-        tar xf source.tar.gz
+        tar xf source.tar.bz2
         cd cupy-release-tools
         #echo ./build.sh "${{ matrix.cuda }}" "${{ matrix.python }}" > "cupy-${{ matrix.cuda }}-${{ matrix.python }}.whl"
         ./build.sh "${{ matrix.cuda }}" "${{ matrix.python }}"
