@@ -4,20 +4,18 @@ on:
   workflow_dispatch:
     inputs:
       target:
-        description: 'Build Target Branch/Tag (e.g., master, v10, v10.5.0)'
+        description: 'Build Target (branch/tag/commit, e.g., master)'
         required: true
+        default: "master"
       release:
-        description: 'Release Name to Upload (e.g., v10.5.0)'
+        description: 'Release Target (tag, e.g., v11.0.0rc1)'
         required: true
+        default: "v11.X.0"
       matrix_cuda_linux_aarch64:
         description: 'Matrix: CUDA (Linux/aarch64)'
         required: true
         #default: '["10.2-jetson", "11.6-aarch64"]'
         default: '["11.6-aarch64"]'
-      matrix_rocm_linux_x64:
-        description: 'Matrix: ROCm (Linux/x64)'
-        required: true
-        default: '["rocm-4.3", "rocm-5.0"]'
       matrix_python:
         description: 'Matrix: Python'
         required: true
@@ -30,7 +28,8 @@ jobs:
     steps:
     - name: Check Release Exists
       run: |
-        echo TODO - ensure that the specified release already exists
+        # Release (or Release Draft) must exist for the given release target.
+        gh release view --repo cupy/cupy "${{ github.event.inputs.release }}"
     - name: Prepare Source
       run: |
         git clone https://github.com/cupy/cupy-release-tools.git
@@ -65,25 +64,10 @@ jobs:
       run: |
         tar xf source.tar.bz2
         cd cupy-release-tools
-        export CUPY_RELEASE_SKIP_VERIFY=1
-        echo ${{ join(fromJSON(github.event.inputs.matrix_python), ' ') }} | xargs ./build.sh "${{ matrix.cuda }}"
-        gh release --repo cupy/cupy upload "${{ github.event.inputs.release }}" *.whl
+        # Prepare builder/verifier Docker images
+        #./dist.py --action build --target wheel-linux --cuda "${{ matrix.cuda }}" --python 3.10 --source cupy --dry-run
+        #./dist.py --action verify --target wheel-linux --cuda "${{ matrix.cuda }}" --python 3.10 --dist /dev/null --test release-tests --dry-run
 
-  rocm-linux-x64:
-    # Builds on ROCm node.
-    runs-on: [self-hosted, linux, x64, rocm]
-    needs: [preflight]
-    strategy:
-      matrix:
-        cuda: ${{ fromJSON(github.event.inputs.matrix_rocm_linux_x64) }}
-    steps:
-    - name: Download Source
-      uses: actions/download-artifact@v2
-      with:
-        name: source
-    - name: Build & Upload
-      run: |
-        tar xf source.tar.bz2
-        cd cupy-release-tools
-        echo ${{ join(fromJSON(github.event.inputs.matrix_python), ' ') }} | xargs ./build.sh "${{ matrix.cuda }}"
+        export CUPY_RELEASE_SKIP_VERIFY=1
+        echo "${{ join(fromJSON(github.event.inputs.matrix_python), ' ') }}" | xargs -n 1 -P 1 ./build.sh "${{ matrix.cuda }}"
         gh release --repo cupy/cupy upload "${{ github.event.inputs.release }}" *.whl
