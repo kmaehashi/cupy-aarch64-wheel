@@ -27,6 +27,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check Release Exists
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         # Release (or Release Draft) must exist for the given release target.
         gh release view --repo cupy/cupy "${{ github.event.inputs.release }}"
@@ -86,4 +88,5 @@ jobs:
         name: wheels
     - name: Publish Wheels to GitHub Releases
       run: |
+        # TODO use token with write permission to cupy/cupy
         gh release --repo cupy/cupy upload "${{ github.event.inputs.release }}" cupy-release-tools/cupy-*.whl
