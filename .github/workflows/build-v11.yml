@@ -27,6 +27,7 @@ jobs:
     - name: Workflow Summary
       run: |
         cat << '_EOF_' >> "${GITHUB_STEP_SUMMARY}"
+        # Workflow Inputs
         **Build Target**: `${{ github.event.inputs.target }}`
         **Release Target**: `${{ github.event.inputs.release }}`
         **Matrix (CUDA)**: `${{ github.event.inputs.matrix_cuda_linux_aarch64 }}`
@@ -49,8 +50,11 @@ jobs:
                 git checkout "${{ github.event.inputs.target }}"
             popd
         popd
-        echo "*** cupy: $(git -C cupy-release-tools/cupy show --summary --oneline)"
-        echo "*** cupy-release-tools: $(git -C cupy-release-tools show --summary --oneline)"
+        cat << "_EOF_" >> "${GITHUB_STEP_SUMMARY}"
+        # Commits
+        **cupy**: $(git -C cupy-release-tools/cupy show --summary --oneline)
+        **cupy-release-tools**: $(git -C cupy-release-tools show --summary --oneline)
+        _EOF_
         tar cjf source.tar.bz2 --exclude-vcs cupy-release-tools
     - name: Artifact (Source)
       uses: actions/upload-artifact@v3
