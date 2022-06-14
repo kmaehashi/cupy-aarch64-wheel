@@ -94,4 +94,4 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.CUPY_WHEEL_UPLOAD_TOKEN }}
       run: |
-        gh release --repo cupy/cupy upload "${{ github.event.inputs.release }}" wheels-*/cupy-*.whl
+        gh release --repo cupy/cupy upload "${{ github.event.inputs.release }}" wheels-*/cupy_*.whl
