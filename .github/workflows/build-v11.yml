@@ -73,5 +73,17 @@ jobs:
     - name: Artifact (Wheel)
       uses: actions/upload-artifact@v2
       with:
-        name: wheel
-        path: *.whl
+        name: wheels
+        path: cupy-release-tools/*.whl
+
+  postflight:
+    runs-on: ubuntu-latest
+    needs: [cuda-linux-aarch64]
+    steps:
+    - name: Download Wheels
+      uses: actions/download-artifact@v2
+      with:
+        name: wheels
+    - name: Publish Wheels to GitHub Releases
+      run: |
+        gh release --repo cupy/cupy upload "${{ github.event.inputs.release }}" cupy-release-tools/cupy-*.whl
