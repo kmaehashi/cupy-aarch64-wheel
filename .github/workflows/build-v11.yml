@@ -14,8 +14,8 @@ on:
       matrix_cuda_linux_aarch64:
         description: 'Matrix: CUDA (Linux/aarch64)'
         required: true
-        #default: '["10.2-jetson", "11.6-aarch64"]'
-        default: '["11.6-aarch64"]'
+        #default: '["10.2-jetson", "11.5-aarch64", "11.6-aarch64"]'
+        default: '["11.5-aarch64"]'
       matrix_python:
         description: 'Matrix: Python'
         required: true
@@ -70,4 +70,8 @@ jobs:
 
         export CUPY_RELEASE_SKIP_VERIFY=1
         echo "${{ join(fromJSON(github.event.inputs.matrix_python), ' ') }}" | xargs -n 1 -P 1 ./build.sh "${{ matrix.cuda }}"
-        gh release --repo cupy/cupy upload "${{ github.event.inputs.release }}" *.whl
+    - name: Artifact (Wheel)
+      uses: actions/upload-artifact@v2
+      with:
+        name: wheel
+        path: *.whl
