@@ -63,7 +63,7 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         name: source
-    - name: Build & Upload
+    - name: Build
       run: |
         tar xf source.tar.bz2
         cd cupy-release-tools
