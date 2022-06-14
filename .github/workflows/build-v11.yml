@@ -8,7 +8,7 @@ on:
         required: true
         default: "master"
       release:
-        description: 'Release Target (tag, e.g., v11.0.0rc1) -- blank to skip upload'
+        description: 'Release Target (tag, e.g., v11.0.0rc1) -- "skip" to skip upload'
         default: "v11.X.0"
       matrix_cuda_linux_aarch64:
         description: 'Matrix: CUDA (Linux/aarch64)'
@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check Release Exists
-      if: github.event.inputs.release != ''
+      if: github.event.inputs.release != 'skip'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
@@ -90,7 +90,7 @@ jobs:
       run: |
         find wheels-* -ls
     - name: Publish Wheels to GitHub Releases
-      if: github.event.inputs.release != ''
+      if: github.event.inputs.release != 'skip'
       run: |
         # TODO use token with write permission to cupy/cupy
         gh release --repo cupy/cupy upload "${{ github.event.inputs.release }}" wheels-*/cupy-*.whl
