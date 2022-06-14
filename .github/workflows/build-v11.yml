@@ -91,6 +91,7 @@ jobs:
         find wheels-* -ls
     - name: Publish Wheels to GitHub Releases
       if: github.event.inputs.release != 'skip'
+      env:
+        GITHUB_TOKEN: ${{ secrets.CUPY_WHEEL_UPLOAD_TOKEN }}
       run: |
-        # TODO use token with write permission to cupy/cupy
         gh release --repo cupy/cupy upload "${{ github.event.inputs.release }}" wheels-*/cupy-*.whl
