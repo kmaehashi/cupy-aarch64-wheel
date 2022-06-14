@@ -22,9 +22,16 @@ on:
 
 jobs:
   preflight:
-    # Creates a source archive of cupy-release-tools and cupy repository.
     runs-on: ubuntu-latest
     steps:
+    - name: Workflow Summary
+      run: |
+        cat << '_EOF_' >> "${GITHUB_STEP_SUMMARY}"
+        **Build Target**: `${{ github.event.inputs.target }}`
+        **Release Target**: `${{ github.event.inputs.release }}`
+        **Matrix (CUDA)**: `${{ github.event.inputs.matrix_cuda_linux_aarch64 }}`
+        **Matrix (Python)**: `${{ github.event.inputs.matrix_python }}`
+        _EOF_
     - name: Check Release Exists
       if: github.event.inputs.release != 'skip'
       env:
@@ -52,8 +59,8 @@ jobs:
         path: source.tar.bz2
 
   build-cuda-linux-aarch64:
-    # Builds on Arm64 node.
-    # Note that verification is not supported as CUDA is unavailable.
+    # Builds on self-hosted aarch64 node.
+    # Note that verification is not performed as CUDA is unavailable.
     runs-on: [self-hosted, linux, arm64]
     needs: [preflight]
     strategy:
