@@ -31,8 +31,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         # Release (or Release Draft) must exist for the given release target.
-        #gh release view --repo cupy/cupy "${{ github.event.inputs.release }}"
-        echo 'skip checking for now'
+        gh release view --repo cupy/cupy "${{ github.event.inputs.release }}" || echo "TODO: tentatively ignoreing error"
     - name: Prepare Source
       run: |
         git clone https://github.com/cupy/cupy-release-tools.git
