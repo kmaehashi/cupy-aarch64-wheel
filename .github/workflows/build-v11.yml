@@ -36,7 +36,7 @@ jobs:
     - name: Check Release Exists
       if: github.event.inputs.release != 'skip'
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.CUPY_WHEEL_UPLOAD_TOKEN }}
       run: |
         # Release (or Release Draft) must exist for the given release target.
         gh release view --repo cupy/cupy "${{ github.event.inputs.release }}"
