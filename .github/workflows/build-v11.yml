@@ -85,11 +85,13 @@ jobs:
         password: ${{ secrets.DOCKERHUB_TOKEN }}
     - name: Generate Builder/Verifier Docker Images
       run: |
+        rm -rf cupy-release-tools
         tar xf source.tar.bz2
-        cd cupy-release-tools
-        # Any version of Python version is fine, the image will have all supported Python versions.
+        pushd cupy-release-tools
+        # Any version of Python is fine, the image will have all supported Python versions.
         ./dist.py --action build --target wheel-linux --cuda "${{ matrix.cuda }}" --python 3.10 --source cupy --dry-run --push
         ./dist.py --action verify --target wheel-linux --cuda "${{ matrix.cuda }}" --python 3.10 --dist /dev/null --test release-tests --dry-run --push
+        popd
 
   build-cuda-linux-aarch64:
     # Builds on self-hosted aarch64 node.
@@ -107,10 +109,12 @@ jobs:
         name: source
     - name: Build
       run: |
+        rm -rf cupy-release-tools
         tar xf source.tar.bz2
-        cd cupy-release-tools
+        pushd cupy-release-tools
         export CUPY_RELEASE_SKIP_VERIFY=1
         ./build.sh "${{ matrix.cuda }}" "${{ matrix.python }}"
+        popd
     - name: Artifact (Wheel)
       uses: actions/upload-artifact@v3
       with:
