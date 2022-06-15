@@ -56,7 +56,7 @@ jobs:
             popd
         popd
         cat << _EOF_ >> "${GITHUB_STEP_SUMMARY}"
-        # Build Target
+        # Build Information
         **cupy**: \`$(git -C cupy-release-tools/cupy show --summary --oneline)\`
         **cupy-release-tools**: \`$(git -C cupy-release-tools show --summary --oneline)\`
         _EOF_
