@@ -120,6 +120,7 @@ jobs:
   upload:
     runs-on: ubuntu-latest
     needs: [build-cuda-linux-aarch64]
+    if: github.event.inputs.release != 'skip'
     steps:
     - name: Download All Wheels
       uses: actions/download-artifact@v3
@@ -127,7 +128,6 @@ jobs:
       run: |
         find wheel-* -type f -ls
     - name: Publish Wheels to GitHub Releases
-      if: github.event.inputs.release != 'skip'
       env:
         GITHUB_TOKEN: ${{ secrets.CUPY_WHEEL_UPLOAD_TOKEN }}
       run: |
