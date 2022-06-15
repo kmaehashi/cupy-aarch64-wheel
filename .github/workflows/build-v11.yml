@@ -114,7 +114,7 @@ jobs:
     - name: Artifact (Wheel)
       uses: actions/upload-artifact@v3
       with:
-        name: "wheel-${{ matrix.cuda }}-${{ matrix.python }}"
+        name: "wheel-cuda-${{ matrix.cuda }}-py-${{ matrix.python }}"
         path: cupy-release-tools/*.whl
 
   upload:
