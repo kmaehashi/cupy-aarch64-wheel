@@ -66,6 +66,7 @@ jobs:
       with:
         name: source
         path: source.tar.bz2
+        if-no-files-found: error
 
   prep-build-cuda-linux-aarch64:
     runs-on: [self-hosted, linux, arm64]
@@ -114,12 +115,14 @@ jobs:
         pushd cupy-release-tools
         export CUPY_RELEASE_SKIP_VERIFY=1
         ./build.sh "${{ matrix.cuda }}" "${{ matrix.python }}"
+        sha256sum cupy_*.whl > "${GITHUB_STEP_SUMMARY}"
         popd
     - name: Artifact (Wheel)
       uses: actions/upload-artifact@v3
       with:
         name: "wheel-cuda-${{ matrix.cuda }}-py-${{ matrix.python }}"
-        path: cupy-release-tools/*.whl
+        path: cupy-release-tools/cupy_*.whl
+        if-no-files-found: error
 
   upload:
     runs-on: ubuntu-latest
