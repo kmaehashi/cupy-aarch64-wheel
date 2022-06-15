@@ -4,11 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       target:
-        description: 'Build Target (branch/tag/commit, e.g., master)'
+        description: 'Build: cupy (branch/tag/commit, e.g., master)'
+        required: true
+        default: "master"
+      target_release_tools:
+        description: 'Build: cupy-release-tools (branch/tag/commit, e.g., master)'
         required: true
         default: "master"
       release:
-        description: 'Release Target (tag, e.g., v11.0.0rc1) -- "skip" to skip upload'
+        description: 'Release Target (tag, e.g., v11.0.0rc1) -- `skip` to skip upload'
         default: "v11.X.0"
       matrix_cuda_linux_aarch64:
         description: 'Matrix: CUDA (Linux/aarch64)'
@@ -28,7 +32,8 @@ jobs:
       run: |
         cat << '_EOF_' >> "${GITHUB_STEP_SUMMARY}"
         # Workflow Inputs
-        **Build Target**: `${{ github.event.inputs.target }}`
+        **Build (cupy)**: `${{ github.event.inputs.target }}`
+        **Build (cupy-release-tools)**: `${{ github.event.inputs.target_release_tools }}`
         **Release Target**: `${{ github.event.inputs.release }}`
         **Matrix (CUDA)**: `${{ github.event.inputs.matrix_cuda_linux_aarch64 }}`
         **Matrix (Python)**: `${{ github.event.inputs.matrix_python }}`
@@ -44,7 +49,7 @@ jobs:
       run: |
         git clone https://github.com/cupy/cupy-release-tools.git
         pushd cupy-release-tools
-            git checkout "${{ github.event.inputs.target }}"
+            git checkout "${{ github.event.inputs.target_release_tools }}"
             git clone --recursive https://github.com/cupy/cupy.git
             pushd cupy
                 git checkout "${{ github.event.inputs.target }}"
