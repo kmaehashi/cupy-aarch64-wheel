@@ -17,8 +17,7 @@ on:
       matrix_cuda_linux_aarch64:
         description: 'Matrix: CUDA (Linux/aarch64)'
         required: true
-        #default: '["10.2-jetson", "11.x-aarch64"]'
-        default: '["11.x-aarch64"]'
+        default: '["10.2-jetson", "11.x-aarch64"]'
       matrix_python:
         description: 'Matrix: Python'
         required: true
