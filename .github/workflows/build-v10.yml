@@ -1,4 +1,4 @@
-name: "Build Wheels (v11)"
+name: "Build Wheels (v10)"
 
 on:
   workflow_dispatch:
@@ -6,18 +6,18 @@ on:
       target:
         description: 'Source: cupy (branch/tag/commit, e.g., master)'
         required: true
-        default: "master"
+        default: "v10"
       target_release_tools:
         description: 'Source: cupy-release-tools (branch/tag/commit, e.g., master)'
         required: true
-        default: "master"
+        default: "v10"
       release:
         description: 'Release Target (draft/tag, e.g., v11.0.0rc1) -- `skip` to skip upload'
-        default: "v11.X.0"
+        default: "v10.6.0"
       matrix_cuda_linux_aarch64:
         description: 'Matrix: CUDA (Linux/aarch64)'
         required: true
-        default: '["10.2-jetson", "11.x-aarch64"]'
+        default: '["10.2-jetson", "11.5-aarch64"]'
       matrix_python:
         description: 'Matrix: Python'
         required: true
