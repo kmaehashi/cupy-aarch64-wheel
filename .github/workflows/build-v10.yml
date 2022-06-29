@@ -62,7 +62,7 @@ jobs:
         \`\`\`
         ### cupy-release-tools
         \`\`\`
-        $(git -C cupy-release-tools/cupy show --summary)
+        $(git -C cupy-release-tools show --summary)
         \`\`\`
         _EOF_
         tar cjf source.tar.bz2 --exclude-vcs cupy-release-tools
