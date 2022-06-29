@@ -18,6 +18,7 @@ on:
 
 jobs:
   prep-build-cuda-linux-x64:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         cuda: ${{ fromJSON(github.event.inputs.matrix_cuda_linux_x64) }}
