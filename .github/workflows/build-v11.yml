@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       target:
-        description: 'Build: cupy (branch/tag/commit, e.g., master)'
+        description: 'Source: cupy (branch/tag/commit, e.g., master)'
         required: true
         default: "master"
       target_release_tools:
-        description: 'Build: cupy-release-tools (branch/tag/commit, e.g., master)'
+        description: 'Source: cupy-release-tools (branch/tag/commit, e.g., master)'
         required: true
         default: "master"
       release:
@@ -31,8 +31,8 @@ jobs:
       run: |
         cat << '_EOF_' >> "${GITHUB_STEP_SUMMARY}"
         # Workflow Inputs
-        **Build (cupy)**: `${{ github.event.inputs.target }}`
-        **Build (cupy-release-tools)**: `${{ github.event.inputs.target_release_tools }}`
+        **Source (cupy)**: `${{ github.event.inputs.target }}`
+        **Source (cupy-release-tools)**: `${{ github.event.inputs.target_release_tools }}`
         **Release Target**: `${{ github.event.inputs.release }}`
         **Matrix (CUDA)**: `${{ github.event.inputs.matrix_cuda_linux_aarch64 }}`
         **Matrix (Python)**: `${{ github.event.inputs.matrix_python }}`
@@ -55,7 +55,7 @@ jobs:
             popd
         popd
         cat << _EOF_ >> "${GITHUB_STEP_SUMMARY}"
-        # Build Information
+        ## Source
         **cupy**: \`$(git -C cupy-release-tools/cupy show --summary --oneline)\`
         **cupy-release-tools**: \`$(git -C cupy-release-tools show --summary --oneline)\`
         _EOF_
@@ -114,7 +114,8 @@ jobs:
         pushd cupy-release-tools
         export CUPY_RELEASE_SKIP_VERIFY=1
         ./build.sh "${{ matrix.cuda }}" "${{ matrix.python }}"
-        sha256sum cupy_*.whl > "${GITHUB_STEP_SUMMARY}"
+        echo "## SHA256" >> "${GITHUB_STEP_SUMMARY}"
+        sha256sum cupy_*.whl >> "${GITHUB_STEP_SUMMARY}"
         popd
     - name: Artifact (Wheel)
       uses: actions/upload-artifact@v3
