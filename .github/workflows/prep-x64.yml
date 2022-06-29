@@ -1,0 +1,46 @@
+name: "Prepare Docker Images"
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Source: cupy (branch/tag/commit, e.g., master)'
+        required: true
+        default: "master"
+      target_release_tools:
+        description: 'Source: cupy-release-tools (branch/tag/commit, e.g., master)'
+        required: true
+        default: "master"
+      matrix_cuda_linux_x64:
+        description: 'Matrix: CUDA (Linux/x64)'
+        required: true
+        default: '["10.2", "11.0", "11.1", "11.x"]'
+
+jobs:
+  prep-build-cuda-linux-x64:
+    strategy:
+      matrix:
+        cuda: ${{ fromJSON(github.event.inputs.matrix_cuda_linux_x64) }}
+    steps:
+    - name: Prepare Source
+      run: |
+        git clone https://github.com/cupy/cupy-release-tools.git
+        pushd cupy-release-tools
+            git checkout "${{ github.event.inputs.target_release_tools }}"
+            git clone --recursive https://github.com/cupy/cupy.git
+            pushd cupy
+                git checkout "${{ github.event.inputs.target }}"
+            popd
+        popd
+    - name: Login to DockerHub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Generate Builder/Verifier Docker Images
+      run: |
+        pushd cupy-release-tools
+        # Any version of Python is fine, the image will have all supported Python versions.
+        ./dist.py --action build --target wheel-linux --cuda "${{ matrix.cuda }}" --python 3.10 --source cupy --dry-run --push
+        ./dist.py --action verify --target wheel-linux --cuda "${{ matrix.cuda }}" --python 3.10 --dist /dev/null --test release-tests --dry-run --push
+        popd
