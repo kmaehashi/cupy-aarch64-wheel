@@ -56,8 +56,14 @@ jobs:
         popd
         cat << _EOF_ >> "${GITHUB_STEP_SUMMARY}"
         ## Source
-        **cupy**: $(git -C cupy-release-tools/cupy show --summary --oneline)
-        **cupy-release-tools**: $(git -C cupy-release-tools show --summary --oneline)
+        ### cupy
+        \`\`\`
+        $(git -C cupy-release-tools/cupy show --summary)
+        \`\`\`
+        ### cupy-release-tools
+        \`\`\`
+        $(git -C cupy-release-tools/cupy show --summary)
+        \`\`\`
         _EOF_
         tar cjf source.tar.bz2 --exclude-vcs cupy-release-tools
     - name: Artifact (Source)
