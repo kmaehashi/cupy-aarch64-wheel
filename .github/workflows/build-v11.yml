@@ -12,7 +12,7 @@ on:
         required: true
         default: "master"
       release:
-        description: 'Release Target (draft/tag, e.g., v11.0.0rc1) -- `skip` to skip upload'
+        description: 'Release to Upload (draft/tag, e.g., v11.0.0rc1) -- `skip` for dry-run'
         default: "v11.X.0"
       matrix_cuda_linux_aarch64:
         description: 'Matrix: CUDA (Linux/aarch64)'
@@ -44,16 +44,24 @@ jobs:
       run: |
         # Release (or Release Draft) must exist for the given release target.
         gh release view --repo cupy/cupy "${{ github.event.inputs.release }}"
-    - name: Prepare Source
+    - name: Checkout cupy-release-tools
+      uses: actions/checkout@v3
+      with:
+        repository: cupy/cupy-release-tools
+        ref: ${{ github.event.inputs.target_release_tools }}
+        submodules: recursive
+        path: cupy-release-tools
+    - name: Checkout cupy
+      uses: actions/checkout@v3
+      with:
+        repository: cupy/cupy
+        ref: ${{ github.event.inputs.target }}
+        submodules: recursive
+        path: cupy-release-tools/cupy
+    - name: Generate Source Archive
       run: |
-        git clone https://github.com/cupy/cupy-release-tools.git
-        pushd cupy-release-tools
-            git checkout "${{ github.event.inputs.target_release_tools }}"
-            git clone --recursive https://github.com/cupy/cupy.git
-            pushd cupy
-                git checkout "${{ github.event.inputs.target }}"
-            popd
-        popd
+        tar cjf source.tar.bz2 --exclude-vcs cupy-release-tools
+
         cat << _EOF_ >> "${GITHUB_STEP_SUMMARY}"
         ## Source
         ### cupy
@@ -65,7 +73,6 @@ jobs:
         $(git -C cupy-release-tools show --summary)
         \`\`\`
         _EOF_
-        tar cjf source.tar.bz2 --exclude-vcs cupy-release-tools
     - name: Artifact (Source)
       uses: actions/upload-artifact@v3
       with:
