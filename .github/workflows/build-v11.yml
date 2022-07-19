@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       target:
-        description: 'Source: cupy (branch/tag/commit, e.g., master)'
+        description: 'Source: cupy (branch/tag/commit, e.g., master, refs/pull/0000/merge)'
         required: true
         default: "master"
       target_release_tools:
