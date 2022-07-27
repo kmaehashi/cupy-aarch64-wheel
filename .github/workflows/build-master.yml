@@ -1,4 +1,4 @@
-name: "Build Wheels (v11)"
+name: "Build Wheels (master)"
 
 on:
   workflow_dispatch:
@@ -6,14 +6,14 @@ on:
       target:
         description: 'Source: cupy (branch/tag/commit, e.g., master, refs/pull/0000/merge)'
         required: true
-        default: "v11"
+        default: "master"
       target_release_tools:
         description: 'Source: cupy-release-tools (branch/tag/commit, e.g., master)'
         required: true
-        default: "v11"
+        default: "master"
       release:
-        description: 'Release to Upload (draft/tag, e.g., v11.2.0) -- `skip` for dry-run'
-        default: "v11.X.0"
+        description: 'Release to Upload (draft/tag, e.g., v12.0.0b2) -- `skip` for dry-run'
+        default: "v12.0.0rc1"
       matrix_cuda_linux_aarch64:
         description: 'Matrix: CUDA (Linux/aarch64)'
         required: true
