@@ -1,0 +1,14 @@
+name: "SHR Test"
+
+on:
+  workflow_dispatch:
+  pull_request_target:
+
+jobs:
+  test:
+    runs-on: [self-hosted, linux, arm64, example]
+    steps:
+    - name: Prepare Source
+      run: |
+        echo Hello world!
+        env
