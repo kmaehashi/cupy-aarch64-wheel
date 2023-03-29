@@ -1,0 +1,154 @@
+name: "Build Wheels (v12)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Source: cupy (branch/tag/commit, e.g., master, refs/pull/0000/merge)'
+        required: true
+        default: "v12"
+      target_release_tools:
+        description: 'Source: cupy-release-tools (branch/tag/commit, e.g., master)'
+        required: true
+        default: "v12"
+      release:
+        description: 'Release to Upload (draft/tag, e.g., v12.2.0) -- `skip` for dry-run'
+        default: "v12.X.0"
+      matrix_cuda_linux_aarch64:
+        description: 'Matrix: CUDA (Linux/aarch64)'
+        required: true
+        default: '["10.2-jetson", "11.x-aarch64", "12.x-aarch64"]'
+      matrix_python:
+        description: 'Matrix: Python'
+        required: true
+        default: '["3.7", "3.8", "3.9", "3.10", "3.11"]'
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Workflow Summary
+      run: |
+        cat << '_EOF_' >> "${GITHUB_STEP_SUMMARY}"
+        # Workflow Inputs
+        **Source (cupy)**: `${{ github.event.inputs.target }}`
+        **Source (cupy-release-tools)**: `${{ github.event.inputs.target_release_tools }}`
+        **Release Target**: `${{ github.event.inputs.release }}`
+        **Matrix (CUDA)**: `${{ github.event.inputs.matrix_cuda_linux_aarch64 }}`
+        **Matrix (Python)**: `${{ github.event.inputs.matrix_python }}`
+        _EOF_
+    - name: Check Release Exists
+      if: github.event.inputs.release != 'skip'
+      env:
+        GITHUB_TOKEN: ${{ secrets.CUPY_WHEEL_UPLOAD_TOKEN }}
+      run: |
+        # Release (or Release Draft) must exist for the given release target.
+        gh release view --repo cupy/cupy "${{ github.event.inputs.release }}"
+    - name: Checkout cupy-release-tools
+      uses: actions/checkout@v3
+      with:
+        repository: cupy/cupy-release-tools
+        ref: ${{ github.event.inputs.target_release_tools }}
+        submodules: recursive
+        path: cupy-release-tools
+    - name: Checkout cupy
+      uses: actions/checkout@v3
+      with:
+        repository: cupy/cupy
+        ref: ${{ github.event.inputs.target }}
+        submodules: recursive
+        path: cupy-release-tools/cupy
+    - name: Generate Source Archive
+      run: |
+        tar cjf source.tar.bz2 --exclude-vcs cupy-release-tools
+
+        cat << _EOF_ >> "${GITHUB_STEP_SUMMARY}"
+        ## Source
+        ### cupy
+        \`\`\`
+        $(git -C cupy-release-tools/cupy show --summary)
+        \`\`\`
+        ### cupy-release-tools
+        \`\`\`
+        $(git -C cupy-release-tools show --summary)
+        \`\`\`
+        _EOF_
+    - name: Artifact (Source)
+      uses: actions/upload-artifact@v3
+      with:
+        name: source
+        path: source.tar.bz2
+        if-no-files-found: error
+
+  prep-build-cuda-linux-aarch64:
+    runs-on: [self-hosted, linux, arm64]
+    needs: [preflight]
+    strategy:
+      matrix:
+        cuda: ${{ fromJSON(github.event.inputs.matrix_cuda_linux_aarch64) }}
+    steps:
+    - name: Download Source
+      uses: actions/download-artifact@v3
+      with:
+        name: source
+    - name: Login to DockerHub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Generate Builder/Verifier Docker Images
+      run: |
+        rm -rf cupy-release-tools
+        tar xf source.tar.bz2
+        pushd cupy-release-tools
+        # Any version of Python is fine, the image will have all supported Python versions.
+        ./dist.py --action build --target wheel-linux --cuda "${{ matrix.cuda }}" --python 3.10 --source cupy --dry-run --push
+        ./dist.py --action verify --target wheel-linux --cuda "${{ matrix.cuda }}" --python 3.10 --dist /dev/null --test release-tests --dry-run --push
+        popd
+
+  build-cuda-linux-aarch64:
+    # Builds on self-hosted aarch64 node.
+    # Note that verification is not performed as CUDA is unavailable.
+    runs-on: [self-hosted, linux, arm64]
+    needs: [prep-build-cuda-linux-aarch64]
+    strategy:
+      matrix:
+        cuda: ${{ fromJSON(github.event.inputs.matrix_cuda_linux_aarch64) }}
+        python: ${{ fromJSON(github.event.inputs.matrix_python) }}
+    steps:
+    - name: Download Source
+      uses: actions/download-artifact@v3
+      with:
+        name: source
+    - name: Build
+      run: |
+        rm -rf cupy-release-tools
+        tar xf source.tar.bz2
+        pushd cupy-release-tools
+        export CUPY_RELEASE_SKIP_VERIFY=1
+        ./build.sh "${{ matrix.cuda }}" "${{ matrix.python }}"
+        echo "## SHA256" >> "${GITHUB_STEP_SUMMARY}"
+        sha256sum cupy_*.whl >> "${GITHUB_STEP_SUMMARY}"
+        popd
+    - name: Artifact (Wheel)
+      uses: actions/upload-artifact@v3
+      with:
+        name: "wheel-cuda-${{ matrix.cuda }}-py-${{ matrix.python }}"
+        path: cupy-release-tools/cupy_*.whl
+        if-no-files-found: error
+
+  upload:
+    runs-on: ubuntu-latest
+    needs: [build-cuda-linux-aarch64]
+    if: github.event.inputs.release != 'skip'
+    steps:
+    - name: Download All Wheels
+      uses: actions/download-artifact@v3
+    - name: List All Wheels
+      run: |
+        find wheel-* -type f -ls
+    - name: Publish Wheels to GitHub Releases
+      env:
+        GITHUB_TOKEN: ${{ secrets.CUPY_WHEEL_UPLOAD_TOKEN }}
+      run: |
+        gh release --repo cupy/cupy upload "${{ github.event.inputs.release }}" wheel-*/cupy_*.whl
