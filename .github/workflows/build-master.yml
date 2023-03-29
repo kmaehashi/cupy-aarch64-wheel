@@ -21,7 +21,7 @@ on:
       matrix_python:
         description: 'Matrix: Python'
         required: true
-        default: '["3.7", "3.8", "3.9", "3.10", "3.11"]'
+        default: '["3.8", "3.9", "3.10", "3.11"]'
 
 jobs:
   preflight:
