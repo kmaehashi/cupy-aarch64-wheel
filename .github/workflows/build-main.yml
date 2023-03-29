@@ -1,16 +1,16 @@
-name: "Build Wheels (master)"
+name: "Build Wheels (main)"
 
 on:
   workflow_dispatch:
     inputs:
       target:
-        description: 'Source: cupy (branch/tag/commit, e.g., master, refs/pull/0000/merge)'
+        description: 'Source: cupy (branch/tag/commit, e.g., main, refs/pull/0000/merge)'
         required: true
-        default: "master"
+        default: "main"
       target_release_tools:
-        description: 'Source: cupy-release-tools (branch/tag/commit, e.g., master)'
+        description: 'Source: cupy-release-tools (branch/tag/commit, e.g., main)'
         required: true
-        default: "master"
+        default: "main"
       release:
         description: 'Release to Upload (draft/tag, e.g., v12.0.0b2) -- `skip` for dry-run'
         default: "v12.0.0rc1"
